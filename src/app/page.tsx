@@ -1,100 +1,128 @@
-"use client";
+"use client"
+import Link from "next/link"
+import { Button } from "./components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card"
+import { createThirdwebClient } from "thirdweb"
+import { ConnectButton } from "thirdweb/react"
+import { inAppWallet, createWallet } from "thirdweb/wallets"
 
-import Image from "next/image";
-import { ConnectButton } from "thirdweb/react";
-import thirdwebIcon from "@public/thirdweb.svg";
-import { client } from "./client";
+type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+type ButtonSize = "default" | "sm" | "lg" | "icon"
+
+const client = createThirdwebClient({
+  clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
+})
+
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: ["google"],
+    },
+  }),
+  createWallet("io.metamask"),
+  createWallet("com.coinbase.wallet"),
+]
 
 export default function Home() {
   return (
-    <main className="p-4 pb-10 min-h-[100vh] flex items-center justify-center container max-w-screen-lg mx-auto">
-      <div className="py-20">
-        <Header />
-
-        <div className="flex justify-center mb-20">
-          <ConnectButton
-            client={client}
-            appMetadata={{
-              name: "Example App",
-              url: "https://example.com",
-            }}
-          />
+    <div className="flex min-h-screen flex-col">
+      <header className="bg-primary py-6">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-primary-foreground">NGO Transparency Platform</h1>
+            <div className="flex items-center gap-4">
+              <ConnectButton
+                client={client}
+                wallets={wallets}
+                connectModal={{ size: "compact" }}
+              />
+              <Link href="/login">
+                <Button variant="secondary" className="text-[1rem] p-[1.5rem] ">Login</Button>
+              </Link>
+            </div>
+          </div>
         </div>
+      </header>
 
-        <ThirdwebResources />
-      </div>
-    </main>
-  );
-}
+      <main className="flex-1">
+        <section className="bg-muted py-20">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="mb-6 text-4xl font-bold">Transparent Donations for a Better World</h2>
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
+              Our blockchain-based platform ensures complete transparency in how NGOs receive and utilize donations.
+            </p>
+            <div className="flex justify-center gap-4 flex-wrap ">
+              <ConnectButton
+                client={client}
+                wallets={wallets}
+                connectModal={{ size: "compact" }}
+                theme={"light"}
+                connectButton={{ label: "Connect Wallet" }}
+              />
+             
+            </div>
+          </div>
+        </section>
 
-function Header() {
-  return (
-    <header className="flex flex-col items-center mb-20 md:mb-20">
-      <Image
-        src={thirdwebIcon}
-        alt=""
-        className="size-[150px] md:size-[150px]"
-        style={{
-          filter: "drop-shadow(0px 0px 24px #a726a9a8)",
-        }}
-      />
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="mb-12 text-center text-3xl font-bold">How It Works</h2>
+            <div className="grid gap-8 md:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Connect</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Connect your wallet securely to our platform using MetaMask, Coinbase Wallet, or social login.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Donate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Make secure donations to verified NGOs using cryptocurrency directly from your wallet.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Track</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>Follow your donations and see how NGOs utilize funds in real-time on the blockchain.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
 
-      <h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter mb-6 text-zinc-100">
-        thirdweb SDK
-        <span className="text-zinc-300 inline-block mx-1"> + </span>
-        <span className="inline-block -skew-x-6 text-blue-500"> Next.js </span>
-      </h1>
+        <section className="py-16">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="mb-6 text-3xl font-bold">Explore NGO Transparency</h2>
+            <p className="mx-auto mb-8 max-w-2xl">
+              View detailed information about NGOs, their donations, and expenditures without needing to register.
+            </p>
+            <Link href="/transparency">
+              <Button variant="default" size="default" className="p-[1.5rem]">
+                View Public Transparency Page
+              </Button>
+            </Link>
+          </div>
+        </section>
+      </main>
 
-      <p className="text-zinc-300 text-base">
-        Read the{" "}
-        <code className="bg-zinc-800 text-zinc-300 px-2 rounded py-1 text-sm mx-1">
-          README.md
-        </code>{" "}
-        file to get started.
-      </p>
-    </header>
-  );
-}
-
-function ThirdwebResources() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-3 justify-center">
-      <ArticleCard
-        title="thirdweb SDK Docs"
-        href="https://portal.thirdweb.com/typescript/v5"
-        description="thirdweb TypeScript SDK documentation"
-      />
-
-      <ArticleCard
-        title="Components and Hooks"
-        href="https://portal.thirdweb.com/typescript/v5/react"
-        description="Learn about the thirdweb React components and hooks in thirdweb SDK"
-      />
-
-      <ArticleCard
-        title="thirdweb Dashboard"
-        href="https://thirdweb.com/dashboard"
-        description="Deploy, configure, and manage your smart contracts from the dashboard."
-      />
+      <footer className="bg-primary py-6 text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>© {new Date().getFullYear()} NGO Transparency Platform. All rights reserved.</p>
+            <div className="flex gap-4">
+              <Link href="/terms" className="hover:underline">Terms</Link>
+              <Link href="/privacy" className="hover:underline">Privacy</Link>
+              <Link href="/faq" className="hover:underline">FAQ</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
-  );
-}
-
-function ArticleCard(props: {
-  title: string;
-  href: string;
-  description: string;
-}) {
-  return (
-    <a
-      href={props.href + "?utm_source=next-template"}
-      target="_blank"
-      className="flex flex-col border border-zinc-800 p-4 rounded-lg hover:bg-zinc-900 transition-colors hover:border-zinc-700"
-    >
-      <article>
-        <h2 className="text-lg font-semibold mb-2">{props.title}</h2>
-        <p className="text-sm text-zinc-400">{props.description}</p>
-      </article>
-    </a>
-  );
+  )
 }
