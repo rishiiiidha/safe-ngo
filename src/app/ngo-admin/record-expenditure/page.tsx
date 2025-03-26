@@ -34,16 +34,13 @@ export default function RecordExpenditure() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // In a real app, you would call your backend/smart contract here
     console.log("Recording expenditure:", formData)
 
-    // Show success message
     toast({
       title: "Success",
       description: "Expenditure recorded successfully",
     })
 
-    // Reset form
     setFormData({
       description: "",
       amount: "",

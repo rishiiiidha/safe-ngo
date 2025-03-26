@@ -1,12 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import DashboardLayout from "../components/dashboard-layout"
-import { useReadContract, useActiveAccount } from "thirdweb/react"
-import { getContract, createThirdwebClient } from "thirdweb"
+import { useActiveAccount } from "thirdweb/react"
+import { getContract, createThirdwebClient, readContract } from "thirdweb"
 import { sepolia } from "thirdweb/chains"
 import { formatEther } from "ethers"
+import { useToast } from "../hooks/use-toast"
+import { Button } from "../components/ui/button"
+import { Loader2 } from "lucide-react"
 
 const navItems = [
   { label: "Home", href: "/ngo-admin" },
@@ -16,139 +20,320 @@ const navItems = [
   { label: "View Expenditures", href: "/ngo-admin/view-expenditures" },
 ]
 
-// Create thirdweb client
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
 })
-// const activeAccount = useActiveAccount()
-// // Get main contract instance
-// const mainContract = getContract({
-//   client,
-//   address: "0xb2c62A5c0845efbAD49cBcf72575C01FD00dFFEe", // Replace with your main contract address
-//   chain: sepolia,
-// })
-// const { data: ngoContractAddressData } = useReadContract({
-//   contract: mainContract,
-//   method: "function ngoAddressToContract(address) view returns (address)",
-//   params: [activeAccount?.address || ""],
-//    //@ts-ignore
-//   enabled: !!activeAccount?.address,
-// })
 
-  const ngoContract = getContract({
-      client,
-      address: "0x2025685e9D3C317a3502BdFBa9A1CDDE10bD6711",
-      chain: sepolia,
-    })
- 
+// Main contract that manages NGOs
+const mainContract = getContract({
+  client,
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f",
+  chain: sepolia,
+})
 
 export default function NGOAdminDashboard() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const contractAddress = searchParams.get("contractAddress")
+  const activeAccount = useActiveAccount()
   
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const [dataLoadingError, setDataLoadingError] = useState(false)
+  
+  // State to store NGO data
+  const [ngoData, setNgoData] = useState({
+    name: "",
+    description: "",
+    creationTime: "",
+    balance: "0",
+    donationCount: "0",
+    totalDonations: "0",
+    totalExpenditures: "0",
+    transparencyScore: "0",
+    ipfsDocumentHash: "",
+    expenditureCount: "0"
+  })
 
-
- 
-
-  // Fetch NGO details using useReadContract
-  const { data: name } = useReadContract({
+  // Verify that the connected wallet is the admin for the contract in the URL
+  useEffect(() => {
+    console.log("Contract Address from URL:", contractAddress)
     
-    contract: ngoContract || undefined, // Pass undefined if ngoContract is null
-    method: "function name() view returns (string)",
-    params: [],
-     //@ts-ignore
-    enabled: !!ngoContract, // Only run if ngoContract is valid
-  })
+    const verifyAdminAccess = async () => {
+      if (!activeAccount?.address) {
+        toast({
+          title: "No wallet connected",
+          description: "Please connect your wallet to access the dashboard",
+          variant: "destructive",
+          duration: 5000,
+        })
+        router.push("/")
+        return
+      }
 
-  const { data: description } = useReadContract({
-     
-    contract: ngoContract || undefined,
-    method: "function description() view returns (string)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+      setIsLoading(true)
+      setErrorMessage("")
+      
+      try {
+        console.log("Checking if account is NGO admin:", activeAccount.address)
+        
+        // Check if the user is an NGO admin
+        const isNGOAdmin = await readContract({
+          contract: mainContract,
+          method: "function isNGOAdmin(address _ngoAdmin) view returns (bool)",
+          params: [activeAccount.address],
+        })
+        
+        console.log("Is NGO Admin result:", isNGOAdmin)
 
-  const { data: creationTime } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function creationTime() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+        if (!isNGOAdmin) {
+          toast({
+            title: "Access denied",
+            description: "You are not registered as an NGO admin",
+            variant: "destructive",
+            duration: 5000,
+          })
+          router.push("/")
+          return
+        }
 
-  const { data: balance } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function getBalance() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+        // Get the NGO contract address for the current admin
+        console.log("Fetching NGO contract for admin:", activeAccount.address)
+        
+        const adminNGOContractAddress = await readContract({
+          contract: mainContract,
+          method: "function getNGOContractByAdmin(address _ngoAdmin) view returns (address)",
+          params: [activeAccount.address],
+        })
+        
+        console.log("Admin's NGO Contract:", adminNGOContractAddress)
+        console.log("URL Contract Address:", contractAddress)
 
-  const { data: donationCount } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function getDonationCount() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+        // Check if the contract address in the URL matches the admin's NGO contract
+        if (contractAddress && contractAddress.toLowerCase() !== adminNGOContractAddress.toLowerCase()) {
+          toast({
+            title: "Invalid NGO contract",
+            description: "You are not authorized to access this NGO dashboard",
+            variant: "destructive",
+            duration: 5000,
+          })
+          router.push(`/login`)
+          return
+        }
 
-  const { data: totalDonations } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function totalDonations() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+        // If no contract address is provided in URL, redirect to the login page
+        if (!contractAddress) {
+          router.push(`/login`)
+          return
+        }
 
-  const { data: totalExpenditures } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function totalExpenditures() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+        setIsAuthorized(true)
+        
+        // Get NGO contract data
+        await fetchNGOData(contractAddress)
+      } catch (error) {
+        console.error("Error verifying admin access:", error)
+        //@ts-ignore
+        setErrorMessage("Authentication error: " + (error.message || "Unknown error"))
+        
+        toast({
+          title: "Authentication error",
+          description: "There was an error verifying your access. Please try logging in again.",
+          variant: "destructive",
+          duration: 5000,
+        })
+        
+        // Don't redirect immediately so user can see the error
+        setTimeout(() => {
+          router.push("/")
+        }, 5000)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const { data: transparencyScore } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function getTransparencyScore() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+    if (activeAccount?.address) {
+      verifyAdminAccess()
+    }
+  }, [activeAccount?.address, contractAddress, router, toast])
 
-  const { data: ipfsDocumentHash } = useReadContract({
-     //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function ipfsDocumentHash() view returns (string)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+  // Fetch NGO data with safer error handling
+  //@ts-ignore
+  const fetchNGOData = async (contractAddress) => {
+    try {
+      setDataLoadingError(false)
+      
+      // Create a contract instance for the specific NGO
+      console.log("Creating contract instance for:", contractAddress)
+      
+      const ngoContract = getContract({
+        client,
+        address: contractAddress,
+        chain: sepolia,
+      })
+      
+      console.log("NGO Contract instance created:", ngoContract.address)
+      
+      // Create a wrapper for safer data fetching
+      //@ts-ignore
+      const safeReadContract = async (methodSignature, params = []) => {
+        try {
+          console.log(`Fetching ${methodSignature}...`)
+          const result = await readContract({
+            contract: ngoContract,
+            method: methodSignature,
+            params: params,
+          })
+          console.log(`${methodSignature} result:`, result)
+          return result
+        } catch (error) {
+          console.error(`Error fetching ${methodSignature}:`, error)
+          return null
+        }
+      }
+      
+      // Fetch all data with safe wrapper - using correct function signature format
+      const nameResult = await safeReadContract("function name() view returns (string)", []) || "Unknown NGO";
+      const descriptionResult = await safeReadContract("function description() view returns (string)", []) || "No description available";
+      const creationTimeResult = await safeReadContract("function creationTime() view returns (uint256)", []) || "0";
+      const balanceResult = await safeReadContract("function getBalance() view returns (uint256)", []) || "0";
+      const donationCountResult = await safeReadContract("function getDonationCount() view returns (uint256)", []) || "0";
+      const totalDonationsResult = await safeReadContract("function totalDonations() view returns (uint256)", []) || "0";
+      const totalExpendituresResult = await safeReadContract("function totalExpenditures() view returns (uint256)", []) || "0";
+      const transparencyScoreResult = await safeReadContract("function getTransparencyScore() view returns (uint256)", []) || "0";
+      const ipfsDocumentHashResult = await safeReadContract("function ipfsDocumentHash() view returns (string)", []) || "";
+      const expenditureCountResult = await safeReadContract("function getExpenditureCount() view returns (uint256)", []) || "0";
+      
+      console.log("All data fetched successfully")
+      
+      // Update state with all fetched data
+      setNgoData({
+        name: nameResult,
+        description: descriptionResult,
+        creationTime: creationTimeResult?.toString() || "0",
+        balance: balanceResult?.toString() || "0",
+        donationCount: donationCountResult?.toString() || "0",
+        totalDonations: totalDonationsResult?.toString() || "0",
+        totalExpenditures: totalExpendituresResult?.toString() || "0",
+        transparencyScore: transparencyScoreResult?.toString() || "0",
+        ipfsDocumentHash: ipfsDocumentHashResult || "",
+        expenditureCount: expenditureCountResult?.toString() || "0",
+      });
+    } catch (error) {
+      console.error("Fatal error fetching NGO data:", error);
+      setDataLoadingError(true);
+      //@ts-ignore
+      setErrorMessage("Data loading error: " + (error.message || "Unknown error"));
+      
+      toast({
+        title: "Data fetching error",
+        description: "There was an error loading NGO data. Please check contract address and try again.",
+        variant: "destructive",
+        duration: 7000,
+      });
+    }
+  };
 
-  const { data: expenditureCount } = useReadContract({
-    //@ts-ignore
-    contract: ngoContract || undefined,
-    method: "function getExpenditureCount() view returns (uint256)",
-    params: [],
-    //@ts-ignore
-    enabled: !!ngoContract,
-  })
+  const handleRetry = async () => {
+    if (contractAddress) {
+      setDataLoadingError(false);
+      setIsLoading(true);
+      try {
+        await fetchNGOData(contractAddress);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="NGO Admin Dashboard" navItems={navItems} userRole="ngo">
+        <div className="flex flex-col items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <div className="text-center">
+            <h2 className="text-xl font-semibold">Loading dashboard...</h2>
+            <p className="text-muted-foreground mt-2">Please wait while we verify your access and load NGO data.</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (!isAuthorized) {
+    return (
+      <DashboardLayout title="NGO Admin Dashboard" navItems={navItems} userRole="ngo">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-500">Access Denied</h2>
+            <p className="text-muted-foreground mt-2">You are not authorized to access this NGO dashboard.</p>
+            {errorMessage && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-500">{errorMessage}</p>
+              </div>
+            )}
+            <Button 
+              className="mt-6" 
+              variant="outline"
+              onClick={() => router.push("/login")}
+            >
+              Return to Login
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (dataLoadingError) {
+    return (
+      <DashboardLayout title="NGO Admin Dashboard" navItems={navItems} userRole="ngo">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-500">Data Loading Error</h2>
+            <p className="text-muted-foreground mt-2">There was an error loading your NGO data.</p>
+            {errorMessage && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md max-w-xl">
+                <p className="text-sm text-red-500 break-words">{errorMessage}</p>
+              </div>
+            )}
+            <div className="mt-6 flex gap-4 justify-center">
+              <Button 
+                variant="default"
+                onClick={handleRetry}
+              >
+                Retry
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => router.push("/login")}
+              >
+                Return to Login
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="NGO Admin Dashboard" navItems={navItems} userRole="ngo">
       <div className="space-y-6">
         <div>
-          <h2 className="mb-4 text-2xl font-semibold">Welcome, {name || "Loading..."}</h2>
+          <h2 className="mb-4 text-2xl font-semibold">Welcome, {ngoData.name || "Loading..."}</h2>
           <p className="text-muted-foreground">
-            {description || "Loading NGO description..."}
+            {ngoData.description || "Loading NGO description..."}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Created on: {creationTime ? new Date(Number(creationTime) * 1000).toLocaleDateString() : "Loading..."}
+            Created on: {ngoData.creationTime && ngoData.creationTime !== "0" 
+              ? new Date(Number(ngoData.creationTime) * 1000).toLocaleDateString() 
+              : "Information not available"}
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Contract Address: {contractAddress || "Loading..."}
           </p>
         </div>
 
@@ -159,7 +344,7 @@ export default function NGOAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalDonations ? `${formatEther(totalDonations)} ETH` : "Loading..."}
+                {formatEther(ngoData.totalDonations || "0")} ETH
               </div>
             </CardContent>
           </Card>
@@ -169,7 +354,7 @@ export default function NGOAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalExpenditures ? `${formatEther(totalExpenditures)} ETH` : "Loading..."}
+                {formatEther(ngoData.totalExpenditures || "0")} ETH
               </div>
             </CardContent>
           </Card>
@@ -179,7 +364,7 @@ export default function NGOAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {balance ? `${formatEther(balance)} ETH` : "Loading..."}
+                {formatEther(ngoData.balance || "0")} ETH
               </div>
             </CardContent>
           </Card>
@@ -191,7 +376,7 @@ export default function NGOAdminDashboard() {
               <CardTitle className="text-sm font-medium">Donation Count</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{donationCount?.toString() || "Loading..."}</div>
+              <div className="text-2xl font-bold">{ngoData.donationCount || "0"}</div>
             </CardContent>
           </Card>
           <Card>
@@ -199,7 +384,7 @@ export default function NGOAdminDashboard() {
               <CardTitle className="text-sm font-medium">Expenditure Count</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{expenditureCount?.toString() || "Loading..."}</div>
+              <div className="text-2xl font-bold">{ngoData.expenditureCount || "0"}</div>
             </CardContent>
           </Card>
           <Card>
@@ -207,7 +392,7 @@ export default function NGOAdminDashboard() {
               <CardTitle className="text-sm font-medium">Transparency Score</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{transparencyScore?.toString() || "Loading..."}</div>
+              <div className="text-2xl font-bold">{ngoData.transparencyScore || "0"}</div>
             </CardContent>
           </Card>
         </div>
@@ -217,9 +402,9 @@ export default function NGOAdminDashboard() {
             <CardTitle className="text-sm font-medium">IPFS Document</CardTitle>
           </CardHeader>
           <CardContent>
-            {ipfsDocumentHash ? (
+            {ngoData.ipfsDocumentHash ? (
               <a
-                href={`https://ipfs.io/ipfs/${ipfsDocumentHash}`}
+                href={`https://ipfs.io/ipfs/${ngoData.ipfsDocumentHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"

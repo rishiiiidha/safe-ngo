@@ -18,18 +18,19 @@ const navItems = [
   { label: "Home", href: "/admin" },
   { label: "Manage Admins", href: "/admin/manage-admins" },
   { label: "Manage NGOs", href: "/admin/manage-ngos" },
+  { label: "Change NGO Status", href: "/admin/change-ngo-status" },
   { label: "View All NGOs", href: "/admin/view-ngos" },
 ]
 
-// Create thirdweb client
+
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
 })
 
-// Get contract instance
+
 const contract = getContract({
   client,
-  address: "0xb2c62A5c0845efbAD49cBcf72575C01FD00dFFEe",
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f",
   chain: sepolia,
 })
 
@@ -39,19 +40,19 @@ export default function ChangeNGOStatus() {
   const [ngoStatus, setNgoStatus] = useState<boolean>(true)
   const [isUpdating, setIsUpdating] = useState(false)
 
-  // Fetch all NGOs
+  
   const { data: ngos, isPending: isNGOsPending } = useReadContract({
     contract,
     method:
       "function getAllNGOs() view returns ((address ngoContractAddress, string name, string description, string ipfsDocumentHash, address ngoAdmin, bool isActive, uint256 registrationTime)[])",
       //@ts-ignore
-    params: [], // Fetch all NGOs
+    params: [],
   })
 
-  // For transaction submission
+
   const { mutate: sendTransaction, isPending: isTransactionPending } = useSendTransaction()
 
-  // Handle NGO selection
+
   const handleNGOSelect = (value: string) => {
     setSelectedNGO(value)
      //@ts-ignore
@@ -62,7 +63,7 @@ export default function ChangeNGOStatus() {
     }
   }
 
-  // Handle status update
+ 
   const handleUpdateStatus = async () => {
     if (!selectedNGO) {
       toast({

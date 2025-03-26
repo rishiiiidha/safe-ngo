@@ -7,7 +7,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
 import { Label } from "../components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { createThirdwebClient, getContract } from "thirdweb"
+import { createThirdwebClient, getContract, readContract } from "thirdweb"
 import { ConnectButton, useActiveAccount, useReadContract, useSendTransaction } from "thirdweb/react"
 import { inAppWallet, createWallet } from "thirdweb/wallets"
 import { prepareContractCall } from "thirdweb"
@@ -20,7 +20,7 @@ const client = createThirdwebClient({
 
 const contract = getContract({
   client,
-  address: "0xb2c62A5c0845efbAD49cBcf72575C01FD00dFFEe",
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f",
   chain: sepolia,
 })
 
@@ -84,7 +84,24 @@ export default function LoginPage() {
     console.log("Role selected:", value)
     setSelectedRole(value)
   }
-
+   //@ts-ignore 
+  const getNGOContractAddress = async (ngoAdminAddress) => {
+    try {
+      console.log("Fetching NGO contract address for admin:", ngoAdminAddress);
+      
+      const contractAddress = await readContract({
+        contract,
+        method: "function getNGOContractByAdmin(address _ngoAdmin) view returns (address)",
+        params: [ngoAdminAddress],
+      });
+      
+      console.log("NGO Contract address retrieved:", contractAddress);
+      return contractAddress;
+    } catch (error) {
+      console.error("Error fetching NGO contract address:", error);
+      throw error;
+    }
+  };
 
   const registerAsDonor = async () => {
     console.log("Attempting to register as donor...");
@@ -218,12 +235,30 @@ export default function LoginPage() {
           console.log("NGO Admin authentication successful")
           toast({
             title: "Authentication successful",
-            description: "Redirecting to NGO admin dashboard",
+            description: "Fetching your NGO contract and redirecting...",
             variant: "default",
             className: "bg-green-100 border-green-400 text-green-900", 
             duration: 3000,
           })
-          setTimeout(() => router.push("/ngo-admin"), 1000)
+          
+          try {
+            // Get the NGO contract address for this admin
+            const ngoContractAddress = await getNGOContractAddress(activeAccount.address);
+            
+            console.log("Redirecting to NGO admin with contract:", ngoContractAddress);
+            
+            // Redirect to the NGO admin dashboard with the contract address as query parameter
+            setTimeout(() => router.push(`/ngo-admin?contractAddress=${ngoContractAddress}`), 1000);
+          } catch (error) {
+            console.error("Error getting NGO contract address:", error);
+            toast({
+              title: "Error retrieving NGO data",
+              description: "Unable to fetch your NGO contract details",
+              variant: "destructive",
+              duration: 5000,
+            });
+            setIsAuthenticating(false);
+          }
         } else {
           console.log("NGO Admin authentication failed")
           toast({

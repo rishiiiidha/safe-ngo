@@ -6,7 +6,7 @@ import { Toaster } from "./components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "thirdweb SDK + Next starter",
+  title: "NGO Transparency Platform",
   description:
     "Starter template for using thirdweb SDK with Next.js App router",
 };

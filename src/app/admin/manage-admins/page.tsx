@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import DashboardLayout from "../../components/dashboard-layout"
-import {  useSendTransaction } from "thirdweb/react"
+import { useSendTransaction, useReadContract } from "thirdweb/react"
 import { prepareContractCall, getContract, createThirdwebClient } from "thirdweb"
 import { sepolia } from "thirdweb/chains"
 import { useToast } from "../../hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, RefreshCw } from "lucide-react"
 
 const navItems = [
   { label: "Home", href: "/admin" },
@@ -20,15 +20,13 @@ const navItems = [
   { label: "View All NGOs", href: "/admin/view-ngos" },
 ]
 
-// Create thirdweb client
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
 })
 
-// Get contract instance
 const contract = getContract({
   client,
-  address: "0xb2c62A5c0845efbAD49cBcf72575C01FD00dFFEe", // Replace with your contract address
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f", 
   chain: sepolia,
 })
 
@@ -38,11 +36,22 @@ export default function ManageAdmins() {
   const [adminToRemove, setAdminToRemove] = useState("")
   const [isAdding, setIsAdding] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  // For transaction submission
+  const { data: admins, isPending: isLoadingAdmins, error: adminsError } = useReadContract({
+    contract,
+    method: "function getAllAdmins() view returns (address[])",
+    params: [],
+    //@ts-ignore
+    queryKey: ["admins", refreshKey],
+  })
+
   const { mutate: sendTransaction } = useSendTransaction()
 
-  // Handle adding an admin
+  const refreshAdminList = () => {
+    setRefreshKey(prev => prev + 1)
+  }
+
   const handleAddAdmin = async () => {
     if (!newAdminAddress) {
       toast({
@@ -72,6 +81,7 @@ export default function ManageAdmins() {
       })
 
       setNewAdminAddress("")
+      refreshAdminList()
     } catch (error) {
       console.error("Error adding admin:", error)
       toast({
@@ -84,7 +94,6 @@ export default function ManageAdmins() {
     }
   }
 
-  // Handle removing an admin
   const handleRemoveAdmin = async () => {
     if (!adminToRemove) {
       toast({
@@ -114,6 +123,7 @@ export default function ManageAdmins() {
       })
 
       setAdminToRemove("")
+      refreshAdminList()
     } catch (error) {
       console.error("Error removing admin:", error)
       toast({
@@ -124,6 +134,10 @@ export default function ManageAdmins() {
     } finally {
       setIsRemoving(false)
     }
+  }
+  //@ts-ignore
+  const handleSelectAdmin = (address) => {
+    setAdminToRemove(address)
   }
 
   return (
@@ -160,8 +174,16 @@ export default function ManageAdmins() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Remove Admin</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={refreshAdminList}
+              disabled={isLoadingAdmins}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoadingAdmins ? 'animate-spin' : ''}`} />
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -175,6 +197,41 @@ export default function ManageAdmins() {
                   disabled={isRemoving}
                 />
               </div>
+              
+              <div className="space-y-2">
+                <Label>Current Admins</Label>
+                <div className="max-h-60 overflow-y-auto border rounded-md p-2">
+                  {isLoadingAdmins ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Loading admins...</span>
+                    </div>
+                  ) : adminsError ? (
+                    <div className="text-red-500 text-sm py-2">
+                      Error loading admins. Please try refreshing.
+                    </div>
+                  ) : admins && admins.length > 0 ? (
+                    <div className="space-y-2">
+                      {admins.map((admin, index) => (
+                        <div 
+                          key={index}
+                          className={`p-2 rounded-md cursor-pointer hover:bg-gray-100 text-sm truncate ${
+                            admin === adminToRemove ? 'bg-blue-50 border border-blue-200' : ''
+                          }`}
+                          onClick={() => handleSelectAdmin(admin)}
+                        >
+                          {admin}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-gray-500 text-sm py-2">
+                      No admins found.
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <Button
                 variant="destructive"
                 onClick={handleRemoveAdmin}

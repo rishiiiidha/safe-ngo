@@ -20,15 +20,15 @@ const navItems = [
   { label: "View All NGOs", href: "/admin/view-ngos" },
 ]
 
-// Create thirdweb client
+
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
 })
 
-// Get contract instance
+
 const contract = getContract({
   client,
-  address: "0xb2c62A5c0845efbAD49cBcf72575C01FD00dFFEe", // Replace with your contract address
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f", 
   chain: sepolia,
 })
 
@@ -43,14 +43,14 @@ export default function ViewNGOs() {
     registrationTime: number
   }>>([])
 
-  // Fetch all NGOs from the blockchain
+  
   const { data, isPending } = useReadContract({
     contract,
     method: "function getAllNGOs() view returns ((address ngoContractAddress, string name, string description, string ipfsDocumentHash, address ngoAdmin, bool isActive, uint256 registrationTime)[])",
     params: [],
   })
 
-  // Update the NGOs state when data is fetched
+  
   useEffect(() => {
     if (data) {
       //@ts-ignore

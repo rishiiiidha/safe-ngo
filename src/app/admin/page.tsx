@@ -21,7 +21,7 @@ const client = createThirdwebClient({
 
 const contract = getContract({
   client,
-  address: "0xb2c62A5c0845efbAD49cBcf72575C01FD00dFFEe", 
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f", 
   chain: sepolia,
 })
 

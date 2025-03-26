@@ -19,7 +19,6 @@ const navItems = [
   { label: "View Expenditures", href: "/ngo-admin/view-expenditures" },
 ]
 
-// Mock data for the NGO
 const mockNGO = {
   name: "Clean Water Initiative",
   description: "Providing clean water to rural communities through sustainable infrastructure and education.",
@@ -37,10 +36,8 @@ export default function UpdateNGODetails() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // In a real app, you would call your backend/smart contract here
     console.log("Updating NGO details:", formData)
 
-    // Show success message
     toast({
       title: "Success",
       description: "NGO details updated successfully",
