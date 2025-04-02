@@ -17,7 +17,6 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.5.2",
     "ethers": "^6.13.5",
-    "graphql": "^16.10.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.482.0",
     "next": "14.1.0",
