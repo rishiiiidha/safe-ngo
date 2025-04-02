@@ -1,30 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import DashboardLayout from "../components/dashboard-layout"
+import { useParams, useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
+import DashboardLayout from "../../components/dashboard-layout"
 import { useActiveAccount } from "thirdweb/react"
 import { getContract, createThirdwebClient, readContract } from "thirdweb"
 import { sepolia } from "thirdweb/chains"
 import { formatEther } from "ethers"
-import { useToast } from "../hooks/use-toast"
-import { Button } from "../components/ui/button"
+import { useToast } from "../../hooks/use-toast"
+import { Button } from "../../components/ui/button"
 import { Loader2 } from "lucide-react"
 
-const navItems = [
-  { label: "Home", href: "/ngo-admin" },
-  { label: "Update NGO Details", href: "/ngo-admin/update-details" },
-  { label: "Record Expenditure", href: "/ngo-admin/record-expenditure" },
-  { label: "View Donations", href: "/ngo-admin/view-donations" },
-  { label: "View Expenditures", href: "/ngo-admin/view-expenditures" },
-]
+
 
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
 })
 
-// Main contract that manages NGOs
 const mainContract = getContract({
   client,
   address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f",
@@ -34,8 +27,18 @@ const mainContract = getContract({
 export default function NGOAdminDashboard() {
   const router = useRouter()
   const { toast } = useToast()
-  const searchParams = useSearchParams()
-  const contractAddress = searchParams.get("contractAddress")
+  const params = useParams()
+  console.log("Params:", params)
+  const contractAddress = Array.isArray(params.contractAddress) 
+    ? params.contractAddress[0] 
+    : params.contractAddress
+  const navItems = [
+      { label: "Home", href: `/ngo-admin/${contractAddress}` },
+      { label: "Update NGO Details", href: `/ngo-admin/${contractAddress}/update-details` },
+      { label: "Record Expenditure", href: `/ngo-admin/${contractAddress}/record-expenditure` },
+      { label: "View Donations", href: `/ngo-admin/${contractAddress}/view-donations` },
+      { label: "View Expenditures", href: `/ngo-admin/${contractAddress}/view-expenditures` },
+    ]
   const activeAccount = useActiveAccount()
   
   const [isLoading, setIsLoading] = useState(true)
@@ -43,7 +46,6 @@ export default function NGOAdminDashboard() {
   const [errorMessage, setErrorMessage] = useState("")
   const [dataLoadingError, setDataLoadingError] = useState(false)
   
-  // State to store NGO data
   const [ngoData, setNgoData] = useState({
     name: "",
     description: "",
@@ -57,7 +59,6 @@ export default function NGOAdminDashboard() {
     expenditureCount: "0"
   })
 
-  // Verify that the connected wallet is the admin for the contract in the URL
   useEffect(() => {
     console.log("Contract Address from URL:", contractAddress)
     
@@ -79,7 +80,6 @@ export default function NGOAdminDashboard() {
       try {
         console.log("Checking if account is NGO admin:", activeAccount.address)
         
-        // Check if the user is an NGO admin
         const isNGOAdmin = await readContract({
           contract: mainContract,
           method: "function isNGOAdmin(address _ngoAdmin) view returns (bool)",
@@ -99,7 +99,6 @@ export default function NGOAdminDashboard() {
           return
         }
 
-        // Get the NGO contract address for the current admin
         console.log("Fetching NGO contract for admin:", activeAccount.address)
         
         const adminNGOContractAddress = await readContract({
@@ -111,7 +110,6 @@ export default function NGOAdminDashboard() {
         console.log("Admin's NGO Contract:", adminNGOContractAddress)
         console.log("URL Contract Address:", contractAddress)
 
-        // Check if the contract address in the URL matches the admin's NGO contract
         if (contractAddress && contractAddress.toLowerCase() !== adminNGOContractAddress.toLowerCase()) {
           toast({
             title: "Invalid NGO contract",
@@ -123,7 +121,6 @@ export default function NGOAdminDashboard() {
           return
         }
 
-        // If no contract address is provided in URL, redirect to the login page
         if (!contractAddress) {
           router.push(`/login`)
           return
@@ -131,7 +128,6 @@ export default function NGOAdminDashboard() {
 
         setIsAuthorized(true)
         
-        // Get NGO contract data
         await fetchNGOData(contractAddress)
       } catch (error) {
         console.error("Error verifying admin access:", error)
@@ -145,7 +141,6 @@ export default function NGOAdminDashboard() {
           duration: 5000,
         })
         
-        // Don't redirect immediately so user can see the error
         setTimeout(() => {
           router.push("/")
         }, 5000)
@@ -159,13 +154,11 @@ export default function NGOAdminDashboard() {
     }
   }, [activeAccount?.address, contractAddress, router, toast])
 
-  // Fetch NGO data with safer error handling
   //@ts-ignore
   const fetchNGOData = async (contractAddress) => {
     try {
       setDataLoadingError(false)
       
-      // Create a contract instance for the specific NGO
       console.log("Creating contract instance for:", contractAddress)
       
       const ngoContract = getContract({
@@ -176,7 +169,6 @@ export default function NGOAdminDashboard() {
       
       console.log("NGO Contract instance created:", ngoContract.address)
       
-      // Create a wrapper for safer data fetching
       //@ts-ignore
       const safeReadContract = async (methodSignature, params = []) => {
         try {
@@ -194,7 +186,6 @@ export default function NGOAdminDashboard() {
         }
       }
       
-      // Fetch all data with safe wrapper - using correct function signature format
       const nameResult = await safeReadContract("function name() view returns (string)", []) || "Unknown NGO";
       const descriptionResult = await safeReadContract("function description() view returns (string)", []) || "No description available";
       const creationTimeResult = await safeReadContract("function creationTime() view returns (uint256)", []) || "0";
@@ -208,7 +199,6 @@ export default function NGOAdminDashboard() {
       
       console.log("All data fetched successfully")
       
-      // Update state with all fetched data
       setNgoData({
         name: nameResult,
         description: descriptionResult,

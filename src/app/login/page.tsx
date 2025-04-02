@@ -242,13 +242,9 @@ export default function LoginPage() {
           })
           
           try {
-            // Get the NGO contract address for this admin
             const ngoContractAddress = await getNGOContractAddress(activeAccount.address);
-            
             console.log("Redirecting to NGO admin with contract:", ngoContractAddress);
-            
-            // Redirect to the NGO admin dashboard with the contract address as query parameter
-            setTimeout(() => router.push(`/ngo-admin?contractAddress=${ngoContractAddress}`), 1000);
+            setTimeout(() => router.push(`/ngo-admin/${ngoContractAddress}`), 1000);
           } catch (error) {
             console.error("Error getting NGO contract address:", error);
             toast({

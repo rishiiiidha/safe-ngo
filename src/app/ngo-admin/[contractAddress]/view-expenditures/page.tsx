@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "../../components/ui/card"
-import { Input } from "../../components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
-import DashboardLayout from "../../components/dashboard-layout"
+import { Card, CardContent } from "../../../components/ui/card"
+import { Input } from "../../../components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table"
+import DashboardLayout from "../../../components/dashboard-layout"
 import { useReadContract } from "thirdweb/react"
 import { getContract, createThirdwebClient } from "thirdweb"
 import { sepolia } from "thirdweb/chains"
 import { formatEther } from "ethers"
+import { useParams } from "next/navigation"
 
 const navItems = [
   { label: "Home", href: "/ngo-admin" },
@@ -32,10 +33,28 @@ const contract = getContract({
 
 export default function ViewExpenditures() {
   const [searchTerm, setSearchTerm] = useState("")
+  const params = useParams();
+  const contractAddress = Array.isArray(params.contractAddress) 
+    ? params.contractAddress[0] 
+    : params.contractAddress
 
+  const navItems = [
+    { label: "Home", href: `/ngo-admin/${contractAddress}` },
+    { label: "Update NGO Details", href: `/ngo-admin/${contractAddress}/update-details` },
+    { label: "Record Expenditure", href: `/ngo-admin/${contractAddress}/record-expenditure` },
+    { label: "View Donations", href: `/ngo-admin/${contractAddress}/view-donations` },
+    { label: "View Expenditures", href: `/ngo-admin/${contractAddress}/view-expenditures` },
+  ]
+
+  const ngoContract = getContract({
+    client,
+    address: contractAddress,
+    chain: sepolia,
+  })
+  
   
   const { data: expenditures, isPending } = useReadContract({
-    contract,
+    contract:ngoContract,
     method: "function getAllExpenditures() view returns ((string description, uint256 amount, uint256 timestamp, string ipfsReceiptHash)[])",
     params: [],
   })
