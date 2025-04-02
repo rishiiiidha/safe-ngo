@@ -206,7 +206,6 @@ export default function RecordExpenditure() {
         chain: sepolia,
       })
 
-      // Convert amount to wei (assuming the contract expects wei)
       const amountInWei = BigInt(Math.floor(parseFloat(formData.amount) * 1e18))
    
       const transaction = prepareContractCall({

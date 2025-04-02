@@ -3,63 +3,70 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../components/ui/card"
 import { Input } from "../components/ui/input"
+import { Badge } from "../components/ui/badge"
+import { useReadContract } from "thirdweb/react"
+import { getContract, createThirdwebClient } from "thirdweb"
+import { sepolia } from "thirdweb/chains"
 
+const client = createThirdwebClient({
+  clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
+})
 
-const mockNGOs = [
-  {
-    id: "1",
-    name: "Clean Water Initiative",
-    description: "Providing clean water to rural communities",
-    adminAddress: "0x1234567890abcdef1234567890abcdef12345678",
-  },
-  {
-    id: "2",
-    name: "Education for All",
-    description: "Supporting education in underprivileged areas",
-    adminAddress: "0xabcdef1234567890abcdef1234567890abcdef12",
-  },
-  {
-    id: "3",
-    name: "Food Security Project",
-    description: "Ensuring food security in vulnerable communities",
-    adminAddress: "0x7890abcdef1234567890abcdef1234567890abcd",
-  },
-  {
-    id: "4",
-    name: "Healthcare Access Program",
-    description: "Improving healthcare access in remote areas",
-    adminAddress: "0xdef1234567890abcdef1234567890abcdef1234",
-  },
-  {
-    id: "5",
-    name: "Environmental Conservation Trust",
-    description: "Protecting natural habitats and biodiversity",
-    adminAddress: "0x567890abcdef1234567890abcdef1234567890ab",
-  },
-]
+const contract = getContract({
+  client,
+  address: "0x1dc0CC61B373Baad3824dEAC7a8537b89d0b818f",
+  chain: sepolia,
+})
+
+interface NGO {
+  ngoContractAddress: string
+  name: string
+  description: string
+  ipfsDocumentHash: string
+  ngoAdmin: string
+  isActive: boolean
+  registrationTime: string
+}
 
 export default function TransparencyPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [ngos] = useState(mockNGOs)
 
+  const { data: ngosData, isPending } = useReadContract({
+    contract,
+    method: "function getAllNGOs() view returns ((address ngoContractAddress, string name, string description, string ipfsDocumentHash, address ngoAdmin, bool isActive, uint256 registrationTime)[])",
+    params: [],
+  })
+
+  const ngos: NGO[] = ngosData ? ngosData.map((ngo: any) => ({
+    ngoContractAddress: ngo.ngoContractAddress,
+    name: ngo.name,
+    description: ngo.description,
+    ipfsDocumentHash: ngo.ipfsDocumentHash,
+    ngoAdmin: ngo.ngoAdmin,
+    isActive: ngo.isActive,
+    registrationTime: ngo.registrationTime.toString()
+  })) : []
 
   const filteredNGOs =
     searchTerm.trim() === ""
       ? ngos
       : ngos.filter(
-          (ngo) =>
-            ngo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ngo.adminAddress.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
+        (ngo) =>
+          ngo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          ngo.ngoAdmin.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          ngo.ngoContractAddress.toLowerCase().includes(searchTerm.toLowerCase())
+      )
 
   return (
     <div className="min-h-screen bg-muted">
       <header className="bg-primary py-6">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-primary-foreground">NGO Transparency Platform</h1>
+            <Link href="/">
+              <h1 className="text-xl font-bold text-primary-foreground">NGO Transparency Platform</h1>
+            </Link>
             <Link href="/login">
               <Button variant="secondary">Login</Button>
             </Link>
@@ -88,43 +95,61 @@ export default function TransparencyPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredNGOs.length > 0 ? (
-            filteredNGOs.map((ngo) => (
-              <Card key={ngo.id} className="overflow-hidden">
-                <CardHeader className="bg-secondary/10 pb-2">
-                  <CardTitle className="text-xl">{ngo.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <p className="mb-4 text-muted-foreground">{ngo.description}</p>
-                  <p className="mb-4 text-xs">
-                    <span className="font-semibold">Admin Address:</span>{" "}
-                    <span className="font-mono">
-                      {ngo.adminAddress.substring(0, 6)}...{ngo.adminAddress.substring(ngo.adminAddress.length - 4)}
-                    </span>
-                  </p>
-                  <Link href={`/transparency/${ngo.id}`}>
-                    <Button variant="outline" className="w-full">
-                      View Details
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="col-span-full text-center">
-              <p className="text-lg text-muted-foreground">No NGOs found matching your search criteria.</p>
-            </div>
-          )}
-        </div>
+        {isPending ? (
+          <div className="text-center py-8">
+            <p className="text-lg">Loading NGOs...</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredNGOs.length > 0 ? (
+              filteredNGOs.map((ngo) => (
+                <Card key={ngo.ngoContractAddress} className="flex flex-col h-full">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-xl truncate">{ngo.name}</CardTitle>
+                      <Badge variant={ngo.isActive ? "secondary" : "destructive"}>
+                        {ngo.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 flex-grow">
+                    <p className="mb-4 text-muted-foreground line-clamp-3">{ngo.description}</p>
+                    <div className="space-y-2">
+                      <p className="text-xs">
+                        <span className="font-semibold">Admin:</span>{" "}
+                        <span className="font-mono">
+                          {ngo.ngoAdmin.substring(0, 6)}...{ngo.ngoAdmin.substring(ngo.ngoAdmin.length - 4)}
+                        </span>
+                      </p>
+                      <p className="text-xs">
+                        <span className="font-semibold">Contract:</span>{" "}
+                        <span className="font-mono">
+                          {ngo.ngoContractAddress.substring(0, 6)}...{ngo.ngoContractAddress.substring(ngo.ngoContractAddress.length - 4)}
+                        </span>
+                      </p>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-0">
+                    <Link href={`/transparency/${ngo.ngoContractAddress}`} className="w-full">
+                      <Button variant="outline" className="w-full">
+                        View Details
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full text-center">
+                <p className="text-lg text-muted-foreground">
+                  {ngos.length === 0 ? "No NGOs registered yet." : "No NGOs found matching your search criteria."}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
-      <footer className="bg-primary py-6 text-primary-foreground">
-        <div className="container mx-auto px-4">
-          <p className="text-center">© {new Date().getFullYear()} NGO Transparency Platform. All rights reserved.</p>
-        </div>
-      </footer>
+
     </div>
   )
 }
-

@@ -1,5 +1,5 @@
 {
-  "name": "ngo-complete-application",
+  "name": "ngo_ledger",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@coinbase/wallet-sdk": "^4.3.0",
+    "@liteflow/core": "^3.0.0",
+    "@liteflow/react": "^3.0.0",
     "@radix-ui/react-slot": "^1.1.2",
     "axios": "^1.8.3",
     "class-variance-authority": "^0.7.1",
@@ -17,6 +19,7 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.5.2",
     "ethers": "^6.13.5",
+    "graphql": "^16.10.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.482.0",
     "next": "14.1.0",

@@ -46,7 +46,7 @@ export default function LoginPage() {
   const { data: isAdmin, isPending: isAdminPending } = useReadContract({
     contract,
     method: "function isAdmin(address _admin) view returns (bool)",
-    // @ts-ignore
+    //@ts-ignore
     params: activeAccount ? [activeAccount.address] : undefined,
     enabled: !!activeAccount && selectedRole === "admin",
   })

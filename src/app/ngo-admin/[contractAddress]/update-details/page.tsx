@@ -57,7 +57,6 @@ export default function UpdateNGODetails() {
   const [fileName, setFileName] = useState("")
   const { mutate: sendTransaction } = useSendTransaction()
 
-  // Initialize with contract data
   useEffect(() => {
     const fetchNGODetails = async () => {
       if (!contractAddress) return
@@ -236,7 +235,7 @@ export default function UpdateNGODetails() {
         params: [
           formData.name,
           formData.description,
-          formData.ipfsHash || "", // Use empty string if no hash provided
+          formData.ipfsHash || "", 
         ],
       })
 
