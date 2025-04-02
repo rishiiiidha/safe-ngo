@@ -110,19 +110,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      <footer className="bg-primary py-6 text-primary-foreground">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© {new Date().getFullYear()} NGO Transparency Platform. All rights reserved.</p>
-            <div className="flex gap-4">
-              <Link href="/terms" className="hover:underline">Terms</Link>
-              <Link href="/privacy" className="hover:underline">Privacy</Link>
-              <Link href="/faq" className="hover:underline">FAQ</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
