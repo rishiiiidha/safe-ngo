@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import DashboardLayout from "../components/dashboard-layout"
@@ -30,6 +30,7 @@ const mainContract = getContract({
 
 export default function DonorDashboard() {
   const router = useRouter()
+  const {push } = router;
   const { toast } = useToast()
   const activeAccount = useActiveAccount()
 
@@ -51,65 +52,7 @@ export default function DonorDashboard() {
       ngoName: string
     }>
   })
-
-  useEffect(() => {
-    const verifyDonorAccess = async () => {
-      if (!activeAccount?.address) {
-        toast({
-          title: "No wallet connected",
-          description: "Please connect your wallet to access the dashboard",
-          variant: "destructive",
-          duration: 5000,
-        })
-        setTimeout(() => {
-          router.push("/login")
-        }
-          , 5000)
-        return
-      }
-
-      setIsLoading(true)
-      setErrorMessage("")
-
-      try {
-        const isDonor = await readContract({
-          contract: mainContract,
-          method: "function isDonor(address _donor) view returns (bool)",
-          params: [activeAccount.address],
-        })
-
-        if (!isDonor) {
-          toast({
-            title: "Access denied",
-            description: "You are not registered as a donor. Please register from the login page.",
-            variant: "destructive",
-            duration: 5000,
-          })
-          router.push("/login")
-          return
-        }
-
-        setIsAuthorized(true)
-
-        await fetchDonorData(activeAccount.address)
-      } catch (error) {
-        console.error("Error in donor dashboard initialization:", error)
-        setErrorMessage(`Error: ${error instanceof Error ? error.message : "Unknown error"}`)
-        toast({
-          title: "Initialization error",
-          description: "There was an error loading the dashboard. Please try again.",
-          variant: "destructive",
-          duration: 5000,
-        })
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    verifyDonorAccess()
-  }, [activeAccount?.address])
-
-  const fetchDonorData = async (donorAddress: string) => {
+  const fetchDonorData = useCallback (async (donorAddress: string) => {
     try {
       setDataLoadingError(false);
 
@@ -202,7 +145,66 @@ export default function DonorDashboard() {
         duration: 5000,
       });
     }
-  };
+  },[toast])
+
+  useEffect(() => {
+    const verifyDonorAccess = async () => {
+      if (!activeAccount?.address) {
+        toast({
+          title: "No wallet connected",
+          description: "Please connect your wallet to access the dashboard",
+          variant: "destructive",
+          duration: 5000,
+        })
+        setTimeout(() => {
+         push("/login")
+        }
+          , 5000)
+        return
+      }
+
+      setIsLoading(true)
+      setErrorMessage("")
+
+      try {
+        const isDonor = await readContract({
+          contract: mainContract,
+          method: "function isDonor(address _donor) view returns (bool)",
+          params: [activeAccount.address],
+        })
+
+        if (!isDonor) {
+          toast({
+            title: "Access denied",
+            description: "You are not registered as a donor. Please register from the login page.",
+            variant: "destructive",
+            duration: 5000,
+          })
+          push("/login")
+          return
+        }
+
+        setIsAuthorized(true)
+
+        await fetchDonorData(activeAccount.address)
+      } catch (error) {
+        console.error("Error in donor dashboard initialization:", error)
+        setErrorMessage(`Error: ${error instanceof Error ? error.message : "Unknown error"}`)
+        toast({
+          title: "Initialization error",
+          description: "There was an error loading the dashboard. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    verifyDonorAccess()
+  }, [activeAccount?.address , fetchDonorData, push, toast])
+
+
 
   const handleRetry = async () => {
     if (!activeAccount?.address) return
@@ -247,7 +249,7 @@ export default function DonorDashboard() {
             <Button
               className="mt-6"
               variant="outline"
-              onClick={() => router.push("/login")}
+              onClick={() => push("/login")}
             >
               Return to Login
             </Button>
@@ -310,14 +312,14 @@ export default function DonorDashboard() {
                 </Card>
               ))
             ) : (
-              <p className="text-muted-foreground col-span-3">You haven't made any donations yet.</p>
+              <p className="text-muted-foreground col-span-3">You haven&apos;t made any donations yet.</p>
             )}
           </div>
           {donorData.donations.length > 0 && (
             <div className="mt-4">
               <Button
                 variant="outline"
-                onClick={() => router.push("/donor/my-donations")}
+                onClick={() => push("/donor/my-donations")}
               >
                 View All Donations
               </Button>

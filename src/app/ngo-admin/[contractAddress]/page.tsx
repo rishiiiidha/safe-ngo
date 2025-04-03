@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import DashboardLayout from "../../components/dashboard-layout"
@@ -58,6 +58,79 @@ export default function NGOAdminDashboard() {
     ipfsDocumentHash: "",
     expenditureCount: "0"
   })
+    //@ts-ignore
+    const fetchNGOData = useCallback( async (contractAddress) => {
+      try {
+        setDataLoadingError(false)
+        
+        console.log("Creating contract instance for:", contractAddress)
+        
+        const ngoContract = getContract({
+          client,
+          address: contractAddress,
+          chain: sepolia,
+        })
+        
+        console.log("NGO Contract instance created:", ngoContract.address)
+        
+        //@ts-ignore
+        const safeReadContract = async (methodSignature, params = []) => {
+          try {
+            console.log(`Fetching ${methodSignature}...`)
+            const result = await readContract({
+              contract: ngoContract,
+              method: methodSignature,
+              params: params,
+            })
+            console.log(`${methodSignature} result:`, result)
+            return result
+          } catch (error) {
+            console.error(`Error fetching ${methodSignature}:`, error)
+            return null
+          }
+        }
+        
+        const nameResult = await safeReadContract("function name() view returns (string)", []) || "Unknown NGO";
+        const descriptionResult = await safeReadContract("function description() view returns (string)", []) || "No description available";
+        const creationTimeResult = await safeReadContract("function creationTime() view returns (uint256)", []) || "0";
+        const balanceResult = await safeReadContract("function getBalance() view returns (uint256)", []) || "0";
+        const donationCountResult = await safeReadContract("function getDonationCount() view returns (uint256)", []) || "0";
+        const totalDonationsResult = await safeReadContract("function getTotalDonations() view returns (uint256)", []) || "0";
+        const totalExpendituresResult = await safeReadContract("function getTotalExpenditures() view returns (uint256)", []) || "0";
+        const transparencyScoreResult = await safeReadContract("function getTransparencyScore() view returns (uint256)", []) || "0";
+        const ipfsDocumentHashResult = await safeReadContract("function ipfsDocumentHash() view returns (string)", []) || "";
+        const expenditureCountResult = await safeReadContract("function getExpenditureCount() view returns (uint256)", []) || "0";
+        
+        console.log("All data fetched successfully")
+        
+        setNgoData({
+          name: nameResult,
+          description: descriptionResult,
+          creationTime: creationTimeResult?.toString() || "0",
+          balance: balanceResult?.toString() || "0",
+          donationCount: donationCountResult?.toString() || "0",
+          totalDonations: totalDonationsResult?.toString() || "0",
+          totalExpenditures: totalExpendituresResult?.toString() || "0",
+          transparencyScore: transparencyScoreResult?.toString() || "0",
+          ipfsDocumentHash: ipfsDocumentHashResult || "",
+          expenditureCount: expenditureCountResult?.toString() || "0",
+        });
+      } catch (error) {
+        console.error("Fatal error fetching NGO data:", error);
+        setDataLoadingError(true);
+        //@ts-ignore
+        setErrorMessage("Data loading error: " + (error.message || "Unknown error"));
+        
+        toast({
+          title: "Data fetching error",
+          description: "There was an error loading NGO data. Please check contract address and try again.",
+          variant: "destructive",
+          duration: 7000,
+        });
+      }
+    },[toast]);
+
+    
 
   useEffect(() => {
     console.log("Contract Address from URL:", contractAddress)
@@ -152,79 +225,8 @@ export default function NGOAdminDashboard() {
     if (activeAccount?.address) {
       verifyAdminAccess()
     }
-  }, [activeAccount?.address, contractAddress, router, toast])
+  }, [activeAccount?.address, contractAddress, fetchNGOData, router, toast])
 
-  //@ts-ignore
-  const fetchNGOData = async (contractAddress) => {
-    try {
-      setDataLoadingError(false)
-      
-      console.log("Creating contract instance for:", contractAddress)
-      
-      const ngoContract = getContract({
-        client,
-        address: contractAddress,
-        chain: sepolia,
-      })
-      
-      console.log("NGO Contract instance created:", ngoContract.address)
-      
-      //@ts-ignore
-      const safeReadContract = async (methodSignature, params = []) => {
-        try {
-          console.log(`Fetching ${methodSignature}...`)
-          const result = await readContract({
-            contract: ngoContract,
-            method: methodSignature,
-            params: params,
-          })
-          console.log(`${methodSignature} result:`, result)
-          return result
-        } catch (error) {
-          console.error(`Error fetching ${methodSignature}:`, error)
-          return null
-        }
-      }
-      
-      const nameResult = await safeReadContract("function name() view returns (string)", []) || "Unknown NGO";
-      const descriptionResult = await safeReadContract("function description() view returns (string)", []) || "No description available";
-      const creationTimeResult = await safeReadContract("function creationTime() view returns (uint256)", []) || "0";
-      const balanceResult = await safeReadContract("function getBalance() view returns (uint256)", []) || "0";
-      const donationCountResult = await safeReadContract("function getDonationCount() view returns (uint256)", []) || "0";
-      const totalDonationsResult = await safeReadContract("function totalDonations() view returns (uint256)", []) || "0";
-      const totalExpendituresResult = await safeReadContract("function totalExpenditures() view returns (uint256)", []) || "0";
-      const transparencyScoreResult = await safeReadContract("function getTransparencyScore() view returns (uint256)", []) || "0";
-      const ipfsDocumentHashResult = await safeReadContract("function ipfsDocumentHash() view returns (string)", []) || "";
-      const expenditureCountResult = await safeReadContract("function getExpenditureCount() view returns (uint256)", []) || "0";
-      
-      console.log("All data fetched successfully")
-      
-      setNgoData({
-        name: nameResult,
-        description: descriptionResult,
-        creationTime: creationTimeResult?.toString() || "0",
-        balance: balanceResult?.toString() || "0",
-        donationCount: donationCountResult?.toString() || "0",
-        totalDonations: totalDonationsResult?.toString() || "0",
-        totalExpenditures: totalExpendituresResult?.toString() || "0",
-        transparencyScore: transparencyScoreResult?.toString() || "0",
-        ipfsDocumentHash: ipfsDocumentHashResult || "",
-        expenditureCount: expenditureCountResult?.toString() || "0",
-      });
-    } catch (error) {
-      console.error("Fatal error fetching NGO data:", error);
-      setDataLoadingError(true);
-      //@ts-ignore
-      setErrorMessage("Data loading error: " + (error.message || "Unknown error"));
-      
-      toast({
-        title: "Data fetching error",
-        description: "There was an error loading NGO data. Please check contract address and try again.",
-        variant: "destructive",
-        duration: 7000,
-      });
-    }
-  };
 
   const handleRetry = async () => {
     if (contractAddress) {

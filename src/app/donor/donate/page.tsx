@@ -1,20 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "../../components/ui/card"
 import DashboardLayout from "../../components/dashboard-layout"
 import { useActiveAccount } from "thirdweb/react"
 import { getContract, createThirdwebClient, readContract } from "thirdweb"
 import { sepolia } from "thirdweb/chains"
-import { formatEther } from "ethers"
 import { useToast } from "../../hooks/use-toast"
 import { Button } from "../../components/ui/button"
-import { Loader2, Info, ExternalLink } from "lucide-react"
+import { Loader2, Info, ExternalLink, Search } from "lucide-react"
 import { prepareContractCall } from "thirdweb";
 import { useSendTransaction } from "thirdweb/react"
 import { Input } from "../../components/ui/input"
-import { Textarea } from "../../components/ui/textarea"
 import { Badge } from "../../components/ui/badge"
 
 const navItems = [
@@ -35,13 +33,14 @@ const mainContract = getContract({
 
 export default function DonatePage() {
   const router = useRouter()
+  const {push } = router;
   const { toast } = useToast()
   const activeAccount = useActiveAccount()
   const { mutate: sendTransaction, isPending: isTransactionPending } = useSendTransaction()
-
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
 
   interface Ngo {
     ngoContractAddress: string;
@@ -57,6 +56,27 @@ export default function DonatePage() {
   const [selectedNgo, setSelectedNgo] = useState<string | null>(null)
   const [donationAmount, setDonationAmount] = useState("")
   const [donationMessage, setDonationMessage] = useState("")
+  const fetchNGOs = useCallback( async () => {
+    try {
+      const ngosData = await readContract({
+        contract: mainContract,
+        method: "function getAllNGOs() view returns ((address ngoContractAddress, string name, string description, string ipfsDocumentHash, address ngoAdmin, bool isActive, uint256 registrationTime)[])",
+        params: [],
+      }) as any[]
+
+      setNgos(ngosData.filter((ngo) => ngo.isActive))
+    } catch (error) {
+      console.error("Error fetching NGOs:", error)
+      setErrorMessage("Failed to load NGOs. Please try again.")
+      toast({
+        title: "Data Loading Error",
+        description: "Could not load NGO data",
+        variant: "destructive",
+        duration: 5000,
+      })
+    }
+  },[toast]);
+
 
   useEffect(() => {
     const verifyDonorAccess = async () => {
@@ -68,7 +88,7 @@ export default function DonatePage() {
           duration: 5000,
         })
         setTimeout(() => {
-          router.push("/login")
+          push("/login")
         }, 5000)
         return
       }
@@ -90,7 +110,7 @@ export default function DonatePage() {
             variant: "destructive",
             duration: 5000,
           })
-          router.push("/login")
+          push("/login")
           return
         }
 
@@ -111,28 +131,8 @@ export default function DonatePage() {
     }
 
     verifyDonorAccess()
-  }, [activeAccount?.address])
+  }, [activeAccount?.address,fetchNGOs,push,toast])
 
-  const fetchNGOs = async () => {
-    try {
-      const ngosData = await readContract({
-        contract: mainContract,
-        method: "function getAllNGOs() view returns ((address ngoContractAddress, string name, string description, string ipfsDocumentHash, address ngoAdmin, bool isActive, uint256 registrationTime)[])",
-        params: [],
-      }) as any[]
-
-      setNgos(ngosData.filter((ngo) => ngo.isActive))
-    } catch (error) {
-      console.error("Error fetching NGOs:", error)
-      setErrorMessage("Failed to load NGOs. Please try again.")
-      toast({
-        title: "Data Loading Error",
-        description: "Could not load NGO data",
-        variant: "destructive",
-        duration: 5000,
-      })
-    }
-  }
 
   const handleDonate = async () => {
     if (!selectedNgo || !donationAmount) {
@@ -206,6 +206,11 @@ export default function DonatePage() {
     window.open(`/transparency/${contractAddress}`, '_blank')
   }
 
+  const filteredNgos = ngos.filter(ngo => 
+    ngo.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    ngo.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   if (isLoading) {
     return (
       <DashboardLayout title="Donate to NGO" navItems={navItems} userRole="donor">
@@ -235,7 +240,7 @@ export default function DonatePage() {
             <Button
               className="mt-6"
               variant="outline"
-              onClick={() => router.push("/login")}
+              onClick={() => push("/login")}
             >
               Return to Login
             </Button>
@@ -250,24 +255,71 @@ export default function DonatePage() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-start gap-8">
           <div className="w-full md:w-7/12 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Available NGOs</h2>
-              <Badge variant="outline" className="px-3 py-1">
-                {ngos.length} Organizations
-              </Badge>
+            <div className="flex flex-col space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Available NGOs</h2>
+                <Badge variant="outline" className="px-3 py-1">
+                  {filteredNgos.length} of {ngos.length} Organizations
+                </Badge>
+              </div>
+
+      
+              <div className="relative">
+                <div className="flex items-center border rounded-md p-2 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                  <Search className="h-5 w-5 text-gray-400 mr-2" />
+                  <Input
+                    type="text"
+                    placeholder="Search NGOs by name or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                  {searchQuery && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setSearchQuery("")}
+                      className="h-7 w-7 p-0"
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {ngos.length === 0 ? (
+            {filteredNgos.length === 0 ? (
               <div className="p-8 text-center border rounded-lg">
-                <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No NGOs Available</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  There are no active NGOs accepting donations at this time.
-                </p>
+                {ngos.length === 0 ? (
+                  <>
+                    <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">No NGOs Available</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      There are no active NGOs accepting donations at this time.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium">No Results Found</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      No NGOs match your search for &quot;
+                      {searchQuery}&quot;
+
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      Clear Search
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
-                {ngos.map((ngo: any) => (
+                {filteredNgos.map((ngo: any) => (
                   <Card
                     key={ngo.ngoContractAddress}
                     className={`overflow-hidden transition-all ${selectedNgo === ngo.ngoContractAddress
@@ -401,10 +453,10 @@ export default function DonatePage() {
                     <p className="text-sm text-muted-foreground mt-2 mb-6">
                       Please select an organization from the list to proceed with your donation
                     </p>
-                    {ngos.length > 0 && (
+                    {filteredNgos.length > 0 && (
                       <Button
                         variant="outline"
-                        onClick={() => setSelectedNgo(ngos[0].ngoContractAddress)}
+                        onClick={() => setSelectedNgo(filteredNgos[0].ngoContractAddress)}
                       >
                         Select an Organization
                       </Button>
