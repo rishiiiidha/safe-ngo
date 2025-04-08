@@ -160,7 +160,7 @@ export default function NGOTransparencyPage() {
             <Link href="/">
           <h1 className="text-xl font-bold text-primary-foreground">NGO Transparency Platform</h1>
           </Link>
-            <Link href="/transperancy">
+            <Link href="/transparency">
               <Button variant="secondary">Back</Button>
             </Link>
           </div>
