@@ -219,7 +219,7 @@ export default function LoginPage() {
             className: "bg-green-100 border-green-400 text-green-900", 
             duration: 3000,
           })
-          setTimeout(() => router.push("/admin"), 1000)
+          setTimeout(() => router.push(`/admin/${activeAccount.address}`), 1000)
         } else {
           console.log("Admin authentication failed")
           toast({

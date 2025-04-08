@@ -1,35 +1,25 @@
 "use client"
 
-
 import { useState, useRef, useEffect } from "react"
-import { Button } from "../../components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
-import { Input } from "../../components/ui/input"
-import { Label } from "../../components/ui/label"
-import { Textarea } from "../../components/ui/textarea"
-import DashboardLayout from "../../components/dashboard-layout"
-import { useToast } from "../../hooks/use-toast"
-import { prepareContractCall } from "thirdweb"
+import { useRouter, useParams } from "next/navigation"
+import { Button } from "../../../components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
+import { Input } from "../../../components/ui/input"
+import { Label } from "../../../components/ui/label"
+import { Textarea } from "../../../components/ui/textarea"
+import DashboardLayout from "../../../components/dashboard-layout"
+import { useToast } from "../../../hooks/use-toast"
+import { prepareContractCall, readContract } from "thirdweb"
 import { useSendTransaction, useReadContract, useActiveAccount } from "thirdweb/react"
 import { getContract, createThirdwebClient } from "thirdweb"
 import { sepolia } from "thirdweb/chains"
 import { AlertCircle, Check, Loader2 } from "lucide-react"
-import { Alert, AlertDescription } from "../../components/ui/alert"
-import { uploadToPinata } from "../../lib/pinata"
-
-const navItems = [
-  { label: "Home", href: "/admin" },
-  { label: "Manage Admins", href: "/admin/manage-admins" },
-  { label: "Manage NGOs", href: "/admin/manage-ngos" },
-  { label: "Change NGO Status", href: "/admin/change-ngo-status" },
-  { label: "View All NGOs", href: "/admin/view-ngos" },
-]
-
+import { Alert, AlertDescription } from "../../../components/ui/alert"
+import { uploadToPinata } from "../../../lib/pinata"
 
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_TEMPLATE_CLIENT_ID || "",
 })
-
 
 const contract = getContract({
   client,
@@ -38,9 +28,19 @@ const contract = getContract({
 })
 
 export default function ManageNGOs() {
+  const router = useRouter()
   const { toast } = useToast()
   const activeAccount = useActiveAccount()
+  const params = useParams()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  
+  const adminAddress = Array.isArray(params.adminAddress) 
+    ? params.adminAddress[0] 
+    : params.adminAddress
   
   const [registerForm, setRegisterForm] = useState({
     adminAddress: "",
@@ -49,34 +49,93 @@ export default function ManageNGOs() {
     ipfsHash: "",
   })
 
-
   const [isUploading, setIsUploading] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
   const [fileName, setFileName] = useState("")
 
+  const navItems = [
+    { label: "Home", href: `/admin/${adminAddress}` },
+    { label: "Manage Admins", href: `/admin/${adminAddress}/manage-admins` },
+    { label: "Manage NGOs", href: `/admin/${adminAddress}/manage-ngos` },
+    { label: "Change NGO Status", href: `/admin/${adminAddress}/change-ngo-status` },
+    { label: "View All NGOs", href: `/admin/${adminAddress}/view-ngos` },
+  ]
 
   const { data: ngoCount, isPending: isNgoCountPending } = useReadContract({
     contract,
     method: "function getNGOCount() view returns (uint256)",
     params: [],
     //@ts-ignore
-    enabled: !!activeAccount,
+    enabled: isAuthorized,
   })
-
 
   const { mutate: sendTransaction, isPending: isTransactionPending } = useSendTransaction()
 
- 
-  const { data: isAdmin, isPending: isAdminPending } = useReadContract({
-    contract,
-    method: "function isAdmin(address _admin) view returns (bool)",
-    //@ts-ignore
-    params: activeAccount ? [activeAccount.address] : undefined,
-    enabled: !!activeAccount,
-  })
+  useEffect(() => {
+    const verifyAdminAccess = async () => {
+      if (!activeAccount?.address) {
+        toast({
+          title: "No wallet connected",
+          description: "Please connect your wallet to access the dashboard",
+          variant: "destructive",
+          duration: 5000,
+        })
+        router.push("/login")
+        return
+      }
 
-  
+      setIsLoading(true)
+      setErrorMessage("")
+      
+      try {
+        const isAdmin = await readContract({
+          contract,
+          method: "function isAdmin(address _admin) view returns (bool)",
+          params: [activeAccount.address],
+        })
 
+        if (!isAdmin) {
+          toast({
+            title: "Access denied",
+            description: "You are not registered as an admin",
+            variant: "destructive",
+            duration: 5000,
+          })
+          router.push("/login")
+          return
+        }
+
+        if (adminAddress && adminAddress.toLowerCase() !== activeAccount.address.toLowerCase()) {
+          toast({
+            title: "Invalid admin address",
+            description: "You are not authorized to access this admin dashboard",
+            variant: "destructive",
+            duration: 5000,
+          })
+          router.push("/login")
+          return
+        }
+
+        setIsAuthorized(true)
+      } catch (error) {
+        console.error("Error verifying admin access:", error)
+        setErrorMessage("Authentication error: " + (error instanceof Error ? error.message : "Unknown error"))
+        
+        toast({
+          title: "Authentication error",
+          description: "There was an error verifying your access. Please try again.",
+          variant: "destructive",
+          duration: 5000,
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (activeAccount?.address) {
+      verifyAdminAccess()
+    }
+  }, [activeAccount?.address, adminAddress, router, toast])
 
   const handleRegisterFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -91,10 +150,7 @@ export default function ManageNGOs() {
     setIsUploading(true)
     
     try {
-     
       const ipfsHash = await uploadToPinata(file)
-      
-      
       setRegisterForm(prev => ({ ...prev, ipfsHash }))
       
       toast({
@@ -116,16 +172,7 @@ export default function ManageNGOs() {
   }
 
   const handleRegisterNGO = async () => {
-    if (!activeAccount) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to register an NGO",
-        variant: "destructive",
-      })
-      return
-    }
-    
-    if (!isAdmin) {
+    if (!isAuthorized) {
       toast({
         title: "Unauthorized",
         description: "Only admin users can register NGOs",
@@ -133,7 +180,6 @@ export default function ManageNGOs() {
       })
       return
     }
-    
 
     if (!registerForm.adminAddress || !registerForm.name || !registerForm.description || !registerForm.ipfsHash) {
       toast({
@@ -175,7 +221,6 @@ export default function ManageNGOs() {
         duration: 5000,
       })
       
-      
       setRegisterForm({
         adminAddress: "",
         name: "",
@@ -197,21 +242,40 @@ export default function ManageNGOs() {
     }
   }
 
- 
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Manage NGOs" navItems={navItems} userRole="admin">
+        <div className="flex flex-col items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin mb-4" />
+          <div className="text-center">
+            <h2 className="text-xl font-semibold">Loading dashboard...</h2>
+            <p className="text-muted-foreground mt-2">Please wait while we verify your admin access.</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
-
+  if (!isAuthorized) {
+    return (
+      <DashboardLayout title="Manage NGOs" navItems={navItems} userRole="admin">
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-500">Access Denied</h2>
+            <p className="text-muted-foreground mt-2">You are not authorized to manage NGOs.</p>
+            {errorMessage && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-500">{errorMessage}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
-    <DashboardLayout title="Manage NGOs" navItems={navItems}>
-      {!isAdminPending && !isAdmin && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Your account does not have admin privileges. You need admin access to manage NGOs.
-          </AlertDescription>
-        </Alert>
-      )}
-      
+    <DashboardLayout title="Manage NGOs" navItems={navItems} userRole="admin">
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -302,12 +366,15 @@ export default function ManageNGOs() {
                   value={registerForm.ipfsHash}
                   onChange={handleRegisterFormChange}
                   disabled={isRegistering}
+                  readOnly
                 />
+                <p className="text-xs text-muted-foreground">This field will be automatically filled when a document is uploaded</p>
               </div>
               
               <Button 
                 onClick={handleRegisterNGO} 
-                disabled={isRegistering || isUploading || isTransactionPending || !isAdmin}
+                disabled={isRegistering || isUploading || isTransactionPending || !isAuthorized}
+                className="w-full"
               >
                 {isRegistering ? (
                   <>
@@ -322,7 +389,45 @@ export default function ManageNGOs() {
           </CardContent>
         </Card>
 
-     
+        <Card>
+          <CardHeader>
+            <CardTitle>NGO Statistics</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-6 border rounded-lg bg-slate-50">
+                <div className="text-center">
+                  <h3 className="text-3xl font-bold">
+                    {isNgoCountPending ? (
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                    ) : (
+                      ngoCount?.toString() || "0"
+                    )}
+                  </h3>
+                  <p className="text-muted-foreground mt-2">Total NGOs Registered</p>
+                </div>
+              </div>
+              
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  All NGO registrations are recorded on the blockchain and cannot be modified after submission. 
+                  Please verify all information before registering.
+                </AlertDescription>
+              </Alert>
+              
+              <div className="text-sm text-muted-foreground">
+                <p className="mb-2">To register a new NGO:</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Enter the NGO admin's wallet address</li>
+                  <li>Provide a name and description for the NGO</li>
+                  <li>Upload required documentation (PDF format)</li>
+                  <li>Submit the registration transaction</li>
+                </ol>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )
