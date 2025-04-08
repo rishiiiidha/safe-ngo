@@ -233,7 +233,7 @@ export default function ChangeNGOStatus() {
       <Alert className="mb-6" variant="default">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Changing an NGO's status will affect its visibility and ability to receive donations. Please use this feature responsibly.
+          Changing an NGO&apos;s status will affect its visibility and ability to receive donations. Please use this feature responsibly.
         </AlertDescription>
       </Alert>
       

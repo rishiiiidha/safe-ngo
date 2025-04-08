@@ -419,7 +419,7 @@ export default function ManageNGOs() {
               <div className="text-sm text-muted-foreground">
                 <p className="mb-2">To register a new NGO:</p>
                 <ol className="list-decimal list-inside space-y-1">
-                  <li>Enter the NGO admin's wallet address</li>
+                  <li>Enter the NGO admin&apos;s wallet address</li>
                   <li>Provide a name and description for the NGO</li>
                   <li>Upload required documentation (PDF format)</li>
                   <li>Submit the registration transaction</li>
