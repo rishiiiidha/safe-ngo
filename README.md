@@ -1,59 +1,119 @@
+# SAFE-NGO
 
-![tw-banner](https://github.com/thirdweb-example/next-starter/assets/57885104/20c8ce3b-4e55-4f10-ae03-2fe4743a5ee8)
+**Secure Accounting Framework with End-to-end Verification System for NGOs**
 
-# thirdweb-next-starter
+A blockchain-based solution for transparent NGO donation management.
 
-Starter template to build an onchain react native app with [thirdweb](https://thirdweb.com/) and [next](https://nextjs.org/).
+![SAFE-NGO Platform](https://github.com/user-attachments/assets/cc40608a-83d9-460d-bfbe-41f836f97310)
 
-## Installation
+## Overview
 
-Install the template using [thirdweb create](https://portal.thirdweb.com/cli/create)
+SAFE-NGO revolutionizes donation tracking by bringing complete transparency to the donation process using blockchain technology. Every transaction—from donation to expenditure—is permanently recorded and publicly verifiable.
+
+### Why It Matters
+
+Traditional NGO donation systems often lack transparency. Our platform addresses this by:
+- Creating immutable records of all financial transactions
+- Making all donation and expenditure data publicly accessible
+- Requiring receipt verification for expenditures
+- Calculating transparency scores based on NGO activity
+
+## Features
+
+### For Donors
+
+| Connect Wallet | Donor Dashboard |
+|:---:|:---:|
+| ![Connect Wallet](https://github.com/user-attachments/assets/148c356d-a1f9-401f-bc7d-1d31d5d877fd) | ![Donor Dashboard](https://github.com/user-attachments/assets/1af3a419-1529-4883-9ed3-303625ed9661) |
+
+| Browse Verified NGOs | Make Donations |
+|:---:|:---:|
+| ![Browse NGOs](https://github.com/user-attachments/assets/e6923f4f-b1dd-4a20-a502-a3d99dd194f3) | ![Make Donations](https://github.com/user-attachments/assets/b0031763-96c8-4259-b5e4-eebe5969bbcb) |
+
+| View Donation History | |
+|:---:|:---:|
+| ![Donation History](https://github.com/user-attachments/assets/583eb90a-1746-4c50-a1de-4e1527e4fa0c) | |
+
+### For NGOs
+
+| NGO Dashboard | Manage Profile |
+|:---:|:---:|
+| ![NGO Dashboard](https://github.com/user-attachments/assets/c3aa6dd5-bfd4-4bb9-b03a-0ccc212c455f) | ![Manage Profile](https://github.com/user-attachments/assets/ab8db066-2629-4c1e-8ba8-0315202ba50d) |
+
+| Record Expenditures | View Donation History |
+|:---:|:---:|
+| ![Record Expenditures](https://github.com/user-attachments/assets/37853198-3975-4804-ab6f-90dcb869abe2) | ![View Donations](https://github.com/user-attachments/assets/7be71820-5c4b-461e-af14-5d6988a0df83) |
+
+| Track Expenditures | |
+|:---:|:---:|
+| ![Track Expenditures](https://github.com/user-attachments/assets/96f18b14-658b-4fb4-bebd-e620f162fa1b) | |
+
+### For Administrators
+
+| Admin Dashboard | Manage Access |
+|:---:|:---:|
+| ![Admin Dashboard](https://github.com/user-attachments/assets/5244db86-8ab1-447b-83d5-4a4f9f85c423) | ![Manage Access](https://github.com/user-attachments/assets/41306c3f-c03c-45ba-8e79-7f0b2dc55429) |
+
+| Register NGOs | Activate/Deactivate NGOs |
+|:---:|:---:|
+| ![Register NGOs](https://github.com/user-attachments/assets/e5868431-9cc5-4c49-a0fa-e6cdc2c9d6ef) | ![Manage NGO Status](https://github.com/user-attachments/assets/b78c76b2-a032-435c-adae-20a3779bcee3) |
+
+## Getting Started
+
+### Prerequisites
+- Node.js 16.x or later
+- MetaMask or compatible Ethereum wallet
+
+### Installation
 
 ```bash
-  npx thirdweb create app --next
+
+git clone https://github.com/rishiiiidha/safe-ngo.git
+
+cd safe-ngo
+
+npm install
+
+cp .env.example .env
+
+npm run dev
 ```
 
-## Environment Variables
+### Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file:
-
-`CLIENT_ID`
-
-To learn how to create a client ID, refer to the [client documentation](https://portal.thirdweb.com/typescript/v5/client). 
-
-## Run locally
-
-Install dependencies
-
-```bash
-yarn
+```
+NEXT_PUBLIC_TEMPLATE_CLIENT_ID=your_thirdweb_client_id
+NEXT_PUBLIC_PINATA_API_KEY=your_pinata_api_key
+NEXT_PUBLIC_PINATA_SECRET_API_KEY=your_pinata_secret_key
 ```
 
-Start development server
+## How It Works
 
-```bash
-yarn dev
-```
+1. **Smart Contract Integration**: All transactions recorded on the Sepolia testnet
+2. **IPFS Document Storage**: Supporting documents stored via Pinata IPFS
+3. **Real-time Transparency**: All records publicly accessible
+4. **Role-Based Access**: Different interfaces for donors, NGO admins, and platform admins
 
-Create a production build
+## Technology Stack
 
-```bash
-yarn build
-```
+- **Frontend**: Next.js, React, Tailwind CSS, shadcn/ui
+- **Blockchain**: Ethereum (Sepolia Testnet), Solidity
+- **Web3 Integration**: ThirdWeb SDK
+- **Storage**: IPFS (via Pinata)
+- **Authentication**: Social login, MetaMask, and Coinbase Wallet
 
-Preview the production build
+## Smart Contracts
 
-```bash
-yarn start
-```
+The Solidity smart contract for this project are available in a separate repository:
+
+[SAFE-NGO Smart Contract](https://github.com/rishiiiidha/safe-ngo-contract)
 
 ## Resources
 
-- [Documentation](https://portal.thirdweb.com/typescript/v5)
-- [Templates](https://thirdweb.com/templates)
-- [YouTube](https://www.youtube.com/c/thirdweb)
-- [Blog](https://blog.thirdweb.com)
+- [ThirdWeb](https://thirdweb.com/)
+- [Pinata](https://www.pinata.cloud/)
+- [shadcn/ui](https://ui.shadcn.com/)
 
-## Need help?
+---
 
-For help or feedback, please [visit our support site](https://thirdweb.com/support)
+Built with ❤️
