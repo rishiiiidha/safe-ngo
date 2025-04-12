@@ -29,7 +29,7 @@ export default function Home() {
       <header className="bg-primary py-6">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-primary-foreground">NGO Transparency Platform</h1>
+            <h1 className="text-2xl font-bold text-primary-foreground">SAFE-NGO</h1>
             <div className="flex items-center gap-4">
               <ConnectButton
                 client={client}

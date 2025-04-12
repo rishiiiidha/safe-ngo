@@ -67,7 +67,7 @@ export default function DashboardLayout({ children, title, navItems, userRole = 
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="w-full bg-primary p-4 text-primary-foreground md:w-64">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl font-bold">NGO Platform</h1>
+          <h1 className="text-xl font-bold">SAFE-NGO</h1>
           <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setLogoutDialogOpen(true)}>
             Logout
           </Button>
@@ -94,14 +94,14 @@ export default function DashboardLayout({ children, title, navItems, userRole = 
         </nav>
         
       
-        <div className="mt-6 pt-6 border-t border-primary-foreground/20">
+        {/* <div className="mt-6 pt-6 border-t border-primary-foreground/20">
           <div className="text-sm">
             <p className="text-primary-foreground/70">Connected Wallet:</p>
             <p className="font-mono text-xs break-all mt-1">
               {activeAccount?.address || "Not connected"}
             </p>
           </div>
-        </div>
+        </div> */}
       </aside>
 
       <main className="flex-1">

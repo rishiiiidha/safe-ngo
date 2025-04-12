@@ -178,7 +178,7 @@ export default function RecordExpenditure() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
+  
     if (!contractAddress) {
       toast({
         title: "Error",
@@ -187,7 +187,7 @@ export default function RecordExpenditure() {
       })
       return
     }
-
+  
     if (!formData.description || !formData.amount || !formData.ipfsHash) {
       toast({
         title: "Missing information",
@@ -196,7 +196,7 @@ export default function RecordExpenditure() {
       })
       return
     }
-
+  
     setIsSubmitting(true)
     
     try {
@@ -205,7 +205,7 @@ export default function RecordExpenditure() {
         address: contractAddress,
         chain: sepolia,
       })
-
+  
       const amountInWei = BigInt(Math.floor(parseFloat(formData.amount) * 1e18))
    
       const transaction = prepareContractCall({
@@ -218,30 +218,30 @@ export default function RecordExpenditure() {
           formData.ipfsHash,
         ],
       })
-
+  
       toast({
         title: "Recording expenditure",
         description: "Please confirm the transaction in your wallet",
         duration: 5000,
       })
-
+  
       const txResult = await sendTransaction(transaction)
       console.log("Transaction submitted:", txResult)
       
-      toast({
-        title: "Expenditure recorded",
-        description: "Transaction has been submitted to the blockchain",
-        variant: "default",
-        duration: 5000,
-      })
-      
-      // Reset form
+     
       setFormData({
         description: "",
         amount: "",
         ipfsHash: "",
       })
       setFileName("")
+      
+      toast({
+        title: "Expenditure recorded",
+        description: "Transaction has been successfully recorded on the blockchain",
+        variant: "default",
+        duration: 5000,
+      })
       
     } catch (error) {
       console.error("Error recording expenditure:", error)

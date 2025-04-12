@@ -65,7 +65,7 @@ export default function TransparencyPage() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <Link href="/">
-              <h1 className="text-xl font-bold text-primary-foreground">NGO Transparency Platform</h1>
+              <h1 className="text-xl font-bold text-primary-foreground">SAFE-NGO</h1>
             </Link>
             <Link href="/login">
               <Button variant="secondary">Login</Button>

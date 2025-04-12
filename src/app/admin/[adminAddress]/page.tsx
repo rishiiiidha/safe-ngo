@@ -9,7 +9,7 @@ import { sepolia } from "thirdweb/chains"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useToast } from "../../hooks/use-toast"
-import { ArrowRight, Loader2, Users, Building, ToggleLeft, ListChecks } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import Link from "next/link"
 
 const client = createThirdwebClient({
@@ -140,11 +140,13 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <DashboardLayout title="Admin Dashboard" navItems={navItems} userRole="admin">
-        <div className="flex flex-col items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin mb-4" />
-          <div className="text-center">
-            <h2 className="text-xl font-semibold">Loading dashboard...</h2>
-            <p className="text-muted-foreground mt-2">Please wait while we verify your admin access.</p>
+        <div className="flex flex-col items-center justify-center h-64  ">
+          <Loader2 className="h-10 w-10 animate-spin mb-4 text-primary" />
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-semibold mb-2">Loading dashboard...</h2>
+            <p className="text-muted-foreground">
+              Please wait while we verify your admin access.
+            </p>
           </div>
         </div>
       </DashboardLayout>
@@ -154,15 +156,23 @@ export default function AdminDashboard() {
   if (!isAuthorized) {
     return (
       <DashboardLayout title="Admin Dashboard" navItems={navItems} userRole="admin">
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-red-500">Access Denied</h2>
-            <p className="text-muted-foreground mt-2">You are not authorized to access this admin dashboard.</p>
+        <div className="flex flex-col items-center justify-center h-64 border rounded-lg">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-semibold text-primary mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-4">
+              You are not authorized to access this admin dashboard.
+            </p>
             {errorMessage && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-500">{errorMessage}</p>
+              <div className="my-4 p-4 border rounded-md">
+                <p className="text-sm">{errorMessage}</p>
               </div>
             )}
+            <Button
+              className="mt-2"
+              onClick={() => router.push("/login")}
+            >
+              Return to Login
+            </Button>
           </div>
         </div>
       </DashboardLayout>
@@ -171,174 +181,120 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout title="Admin Dashboard" navItems={navItems} userRole="admin">
-      <div className="space-y-8">
-        <div>
-          <h2 className="mb-4 text-2xl font-semibold">Welcome, Admin</h2>
-          <p className="text-muted-foreground">
-            Manage platform administrators, NGOs, and system settings from this dashboard. Your wallet address: <span className="font-mono text-xs bg-slate-100 p-1 rounded">{activeAccount?.address}</span>
-          </p>
-        </div>
+      <div className="space-y-6">
+   
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total NGOs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <div className="flex flex-col space-y-2">
+              <h2 className="text-2xl font-bold">Welcome, Admin</h2>
+              <p className="text-muted-foreground">
+                Manage platform administrators, NGOs, and system settings from this dashboard.
+              </p>
+              <p className="text-muted-foreground">
+                
+                Connected: {activeAccount?.address ? 
+                  `${activeAccount.address.substring(0, 6)}...${activeAccount.address.substring(activeAccount.address.length - 4)}` : 
+                  "Not connected"}
+              </p>
+            </div>
+        
+
+     
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="border border-primary/10">
+            <CardContent className="pt-6">
+              <h3 className="text-sm font-medium mb-1">Total NGOs</h3>
+              <div className="text-3xl font-bold">
                 {isNgoCountPending ? <Loader2 className="h-5 w-5 animate-spin" /> : ngoCount ? ngoCount.toString() : "0"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Registered organizations on platform
+                Registered
               </p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Active NGOs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+          
+          <Card className="border border-primary/10">
+            <CardContent className="pt-6">
+              <h3 className="text-sm font-medium mb-1">Active NGOs</h3>
+              <div className="text-3xl font-bold">
                 {isNgosPending ? <Loader2 className="h-5 w-5 animate-spin" /> : activeNGOsCount}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Currently active and receiving donations
+                Accepting donations
               </p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Inactive NGOs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-500">
+          
+          <Card className="border border-primary/10">
+            <CardContent className="pt-6">
+              <h3 className="text-sm font-medium mb-1">Inactive NGOs</h3>
+              <div className="text-3xl font-bold">
                 {isNgosPending ? <Loader2 className="h-5 w-5 animate-spin" /> : inactiveNGOsCount}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Currently paused or disabled
+                On hold
               </p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Platform Admins</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+          
+          <Card className="border border-primary/10">
+            <CardContent className="pt-6">
+              <h3 className="text-sm font-medium mb-1">Platform Admins</h3>
+              <div className="text-3xl font-bold">
                 {isAdminsPending ? <Loader2 className="h-5 w-5 animate-spin" /> : admins ? admins.length : "0"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Users with administrative access
+                With admin access
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common administrative tasks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href={`/admin/${adminAddress}/manage-ngos`} className="block">
-                  <div className="border rounded-md p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <Building className="h-5 w-5 text-blue-500" />
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium">Register New NGO</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Add a new organization to the platform</p>
+      
+        <Card className="border border-primary/10">
+          <CardHeader>
+            <CardTitle>Administrator Information</CardTitle>
+            <CardDescription>Your role and capabilities on the platform</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+             
+              
+              <div className="space-y-3">
+                <h3 className="font-medium text-lg mb-2">Your Admin Identity</h3>
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between border rounded-md p-3">
+                    <span className="text-sm font-medium">Wallet Address:</span>
+                    <span className="font-mono text-xs">
+                      {activeAccount?.address}
+                    </span>
                   </div>
-                </Link>
-                
-                <Link href={`/admin/${adminAddress}/manage-admins`} className="block">
-                  <div className="border rounded-md p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <Users className="h-5 w-5 text-blue-500" />
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium">Manage Admins</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Add or remove platform administrators</p>
+                  <div className="flex items-center justify-between border rounded-md p-3">
+                    <span className="text-sm font-medium">Role:</span>
+                    <span>Platform Administrator</span>
                   </div>
-                </Link>
-                
-                <Link href={`/admin/${adminAddress}/change-ngo-status`} className="block">
-                  <div className="border rounded-md p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <ToggleLeft className="h-5 w-5 text-blue-500" />
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium">Change NGO Status</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Activate or deactivate organizations</p>
-                  </div>
-                </Link>
-                
-                <Link href={`/admin/${adminAddress}/view-ngos`} className="block">
-                  <div className="border rounded-md p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <ListChecks className="h-5 w-5 text-blue-500" />
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <h3 className="font-medium">View All NGOs</h3>
-                    <p className="text-sm text-muted-foreground mt-1">See detailed information about all NGOs</p>
-                  </div>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Administrator Information</CardTitle>
-              <CardDescription>Your role and capabilities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-md">
-                  <h3 className="font-medium  mb-2">Admin Privileges</h3>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span> 
-                      <span>Register new NGOs with verified documentation</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span> 
-                      <span>Manage NGO status (active/inactive)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span> 
-                      <span>Add or remove other platform administrators</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span> 
-                      <span>View detailed information about all NGOs</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="border-t pt-4">
-                  <h3 className="font-medium mb-2">Your Admin Identity</h3>
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Wallet Address:</span>
-                      <span className="font-mono text-xs bg-slate-100 p-1 rounded">{activeAccount?.address}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Role:</span>
-                      <span className="text-sm font-medium">Platform Administrator</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Network:</span>
-                      <span className="text-sm">{sepolia.name}</span>
-                    </div>
+                  <div className="flex items-center justify-between border rounded-md p-3">
+                    <span className="text-sm font-medium">Network:</span>
+                    <span>{sepolia.name}</span>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              
+              <div className="pt-2 flex justify-end space-x-4">
+                <Button 
+                  variant="outline"
+                  onClick={() => router.push(`/admin/${adminAddress}/manage-ngos`)}
+                >
+                  Manage NGOs
+                </Button>
+                <Button 
+                  onClick={() => router.push(`/admin/${adminAddress}/manage-admins`)}
+                >
+                  Manage Admins
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )

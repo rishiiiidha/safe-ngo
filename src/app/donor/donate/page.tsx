@@ -81,15 +81,7 @@ export default function DonatePage() {
   useEffect(() => {
     const verifyDonorAccess = async () => {
       if (!activeAccount?.address) {
-        toast({
-          title: "No wallet connected",
-          description: "Please connect your wallet to access the dashboard",
-          variant: "destructive",
-          duration: 5000,
-        })
-        setTimeout(() => {
-          push("/login")
-        }, 5000)
+        setIsLoading(false)
         return
       }
 
