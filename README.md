@@ -18,35 +18,28 @@ Traditional NGO donation systems often lack transparency. Our platform addresses
 - Requiring receipt verification for expenditures
 - Calculating transparency scores based on NGO activity
 
-## Features
 
 ### For Donors
 
-| Connect Wallet | Donor Dashboard |
-|:---:|:---:|
-| ![Connect Wallet](https://github.com/user-attachments/assets/148c356d-a1f9-401f-bc7d-1d31d5d877fd) | ![Donor Dashboard](https://github.com/user-attachments/assets/1af3a419-1529-4883-9ed3-303625ed9661) |
+| Connect Wallet | Donor Dashboard | Browse Verified NGOs |
+|:---:|:---:|:---:|
+| ![Connect Wallet](https://github.com/user-attachments/assets/148c356d-a1f9-401f-bc7d-1d31d5d877fd) | ![Donor Dashboard](https://github.com/user-attachments/assets/1af3a419-1529-4883-9ed3-303625ed9661) | ![Browse NGOs](https://github.com/user-attachments/assets/e6923f4f-b1dd-4a20-a502-a3d99dd194f3) |
 
-| Browse Verified NGOs | Make Donations |
+| Make Donations | View Donation History |
 |:---:|:---:|
-| ![Browse NGOs](https://github.com/user-attachments/assets/e6923f4f-b1dd-4a20-a502-a3d99dd194f3) | ![Make Donations](https://github.com/user-attachments/assets/b0031763-96c8-4259-b5e4-eebe5969bbcb) |
+| ![Browse NGOs](https://github.com/user-attachments/assets/e6923f4f-b1dd-4a20-a502-a3d99dd194f3) | ![Donation History](https://github.com/user-attachments/assets/583eb90a-1746-4c50-a1de-4e1527e4fa0c) |
 
-| View Donation History | |
-|:---:|:---:|
-| ![Donation History](https://github.com/user-attachments/assets/583eb90a-1746-4c50-a1de-4e1527e4fa0c) | |
+
 
 ### For NGOs
 
-| NGO Dashboard | Manage Profile |
-|:---:|:---:|
-| ![NGO Dashboard](https://github.com/user-attachments/assets/c3aa6dd5-bfd4-4bb9-b03a-0ccc212c455f) | ![Manage Profile](https://github.com/user-attachments/assets/ab8db066-2629-4c1e-8ba8-0315202ba50d) |
+| NGO Dashboard | Manage Profile | Record Expenditures | 
+|:---:|:---:|:---:|
+| ![NGO Dashboard](https://github.com/user-attachments/assets/c3aa6dd5-bfd4-4bb9-b03a-0ccc212c455f) | ![Manage Profile](https://github.com/user-attachments/assets/ab8db066-2629-4c1e-8ba8-0315202ba50d) | ![Record Expenditures](https://github.com/user-attachments/assets/37853198-3975-4804-ab6f-90dcb869abe2)  | 
 
-| Record Expenditures | View Donation History |
+| View Donation History | Track Expenditures |
 |:---:|:---:|
-| ![Record Expenditures](https://github.com/user-attachments/assets/37853198-3975-4804-ab6f-90dcb869abe2) | ![View Donations](https://github.com/user-attachments/assets/7be71820-5c4b-461e-af14-5d6988a0df83) |
-
-| Track Expenditures | |
-|:---:|:---:|
-| ![Track Expenditures](https://github.com/user-attachments/assets/96f18b14-658b-4fb4-bebd-e620f162fa1b) | |
+|![View Donations](https://github.com/user-attachments/assets/7be71820-5c4b-461e-af14-5d6988a0df83) | ![Track Expenditures](https://github.com/user-attachments/assets/96f18b14-658b-4fb4-bebd-e620f162fa1b) | |
 
 ### For Administrators
 
@@ -116,4 +109,4 @@ The Solidity smart contract for this project are available in a separate reposit
 
 ---
 
-Built with ❤️
+Built with ❤️ by Rishi
